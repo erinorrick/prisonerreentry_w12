@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Same Offense, Different Clock</title>
+<style>
+  :root { --gold:#CFB87C; --black:#000000; --paper:#F7F5F0; --line:#E0DCD0; --ink:#1A1A1A; --muted:#5A5A5A; --link:#8A6D1D; --green:#2F6B3A; --red:#8C2B1E; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:#FFFFFF; color:var(--ink); font-family:'Lato','Helvetica Neue',Arial,sans-serif; line-height:1.55; }
+  .wrap { max-width:880px; margin:0 auto; padding:16px; }
+  .banner { background:var(--black); color:#FFF; padding:22px 26px; border-radius:4px; }
+  .eyebrow { color:var(--gold); font-size:13px; letter-spacing:2px; text-transform:uppercase; font-weight:700; margin:0; }
+  .banner h1 { margin:6px 0 2px 0; font-size:26px; }
+  .banner p.sub { margin:0; color:var(--gold); }
+  .progress { height:8px; background:var(--line); border-radius:4px; margin:14px 0 4px; overflow:hidden; }
+  .progress > div { height:100%; background:var(--gold); width:0; transition:width .3s; }
+  .steplabel { font-size:13px; color:var(--muted); margin-bottom:12px; }
+  .screen { display:none; }
+  .screen.active { display:block; }
+  h2 { font-size:21px; border-bottom:3px solid var(--gold); padding-bottom:5px; margin:18px 0 12px; }
+  .box { background:var(--paper); border-left:6px solid var(--gold); padding:14px 18px; border-radius:2px; margin:12px 0; }
+  .outline { border:2px solid var(--gold); border-radius:4px; padding:14px 18px; margin:12px 0; }
+  .dark { background:var(--black); color:#FFF; padding:16px 20px; border-radius:4px; margin:12px 0; }
+  .dark strong { color:var(--gold); }
+  .cards2 { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  @media (max-width:640px){ .cards2 { grid-template-columns:1fr; } }
+  .pcard { border:2px solid var(--black); border-radius:6px; padding:14px 16px; background:#FFF; }
+  .pcard.b { border-color:var(--gold); }
+  .pcard h3 { margin:0 0 4px; font-size:17px; }
+  .tag { display:inline-block; font-size:11px; font-weight:700; letter-spacing:.5px; padding:2px 8px; border-radius:3px; background:#EDEAE0; margin-right:4px; }
+  .tag.a { background:var(--black); color:var(--gold); }
+  .tag.b { background:var(--gold); color:var(--black); }
+  .evidence { border:1px solid var(--line); border-radius:6px; padding:16px 18px; margin:10px 0 14px; background:#FFF; box-shadow:0 1px 3px rgba(0,0,0,.06); }
+  .evidence .src { font-size:13px; color:var(--muted); margin-top:8px; }
+  .slidergrid { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin:10px 0; }
+  @media (max-width:640px){ .slidergrid { grid-template-columns:1fr; } }
+  .sl { background:var(--paper); padding:10px 14px; border-radius:4px; }
+  .sl label { font-weight:700; font-size:14px; display:block; }
+  .sl input[type=range] { width:100%; accent-color:var(--black); }
+  .sl .val { font-size:22px; font-weight:700; }
+  .chips { display:flex; flex-wrap:wrap; gap:8px; margin:8px 0; }
+  .chip { border:2px solid var(--black); background:#FFF; padding:6px 12px; border-radius:20px; cursor:pointer; font-size:14px; font-family:inherit; }
+  .chip.on { background:var(--black); color:var(--gold); }
+  textarea, input[type=text] { width:100%; font-family:inherit; font-size:15px; padding:8px 10px; border:1px solid #BDB8A8; border-radius:4px; }
+  textarea { min-height:90px; }
+  .btnrow { display:flex; justify-content:space-between; gap:10px; margin:18px 0 8px; }
+  button.nav { background:var(--black); color:var(--gold); border:none; padding:10px 20px; font-size:15px; font-weight:700; border-radius:4px; cursor:pointer; font-family:inherit; }
+  button.nav.secondary { background:#FFF; color:var(--black); border:2px solid var(--black); }
+  button.nav:disabled { opacity:.4; cursor:not-allowed; }
+  .msg { color:var(--red); font-size:14px; min-height:20px; }
+  .opt { display:block; border:2px solid var(--line); border-radius:6px; padding:10px 14px; margin:8px 0; cursor:pointer; background:#FFF; text-align:left; width:100%; font-family:inherit; font-size:15px; }
+  .opt.right { border-color:var(--green); background:#EEF5EF; }
+  .opt.wrong { border-color:var(--red); background:#F8ECEA; }
+  .feedback { margin-top:8px; font-size:15px; }
+  .feat { display:grid; grid-template-columns:auto 1fr auto; gap:10px; align-items:start; border:1px solid var(--line); border-radius:6px; padding:10px 12px; margin:8px 0; background:#FFF; }
+  .feat.on { border:2px solid var(--black); background:var(--paper); }
+  .feat .cost { font-weight:700; white-space:nowrap; }
+  .feat .why { font-size:13px; color:var(--muted); }
+  .budget { position:sticky; top:0; background:#FFF; padding:8px 0; z-index:2; font-weight:700; }
+  .budgetbar { height:12px; background:var(--line); border-radius:6px; overflow:hidden; margin-top:4px; }
+  .budgetbar > div { height:100%; background:var(--gold); width:0; }
+  .voice { border-left:6px solid var(--black); background:var(--paper); padding:12px 16px; margin:10px 0; border-radius:2px; }
+  .voice.g { border-left-color:var(--gold); }
+  .voice .who { font-weight:700; font-size:14px; margin-bottom:4px; }
+  .count { font-size:13px; color:var(--muted); text-align:right; }
+  .small { font-size:13px; color:var(--muted); }
+  pre#summary { white-space:pre-wrap; background:var(--paper); padding:14px; border-radius:4px; font-family:inherit; font-size:14px; }
+  svg text { font-family:'Lato','Helvetica Neue',Arial,sans-serif; }
+
+  .mtag { display:none; }
+  ul.tight { margin:6px 0 0; padding-left:18px; font-size:14px; }
+  ul.tight li { margin-bottom:4px; }
+  table.plan { width:100%; border-collapse:collapse; font-size:14px; margin:10px 0; }
+  table.plan th { background:var(--black); color:#FFF; text-align:left; padding:8px 10px; }
+  table.plan td { padding:8px 10px; border-bottom:1px solid var(--line); vertical-align:middle; }
+  table.plan tr:nth-child(odd) td { background:var(--paper); }
+  .seg { display:inline-flex; border:2px solid var(--black); border-radius:4px; overflow:hidden; }
+  .seg button { border:none; background:#FFF; padding:5px 9px; font-family:inherit; font-size:13px; cursor:pointer; border-right:1px solid var(--line); }
+  .seg button:last-child { border-right:none; }
+  .seg button.on { background:var(--black); color:var(--gold); font-weight:700; }
+  .okfb { color:var(--green); }
+  .nofb { color:var(--red); }
+  .budget { display:block; }
+  @media (max-width:640px){ table.plan th:nth-child(2), table.plan td:nth-child(2) { display:none; } }
+  @media (max-width:640px){ .mtag { display:inline-block; margin-top:4px; } .seg button { padding:5px 6px; font-size:12px; } table.plan td, table.plan th { padding:6px; } .seg { display:flex; flex-direction:column; } .seg button { border-right:none; border-bottom:1px solid var(--line); } }
+</style>
+
+</head>
+<body>
+<div class="wrap">
+
+  <div class="banner">
+    <p class="eyebrow">Week 12 Engagement Activity &middot; Developmental Framework Application</p>
+    <h1>Same Offense, Different Clock</h1>
+    <p class="sub">Two people, one offense history, eighteen years apart.</p>
+  </div>
+  <div class="progress"><div id="bar"></div></div>
+  <div class="steplabel" id="steplabel"></div>
+
+  <!-- 0 SETUP -->
+  <section class="screen" data-s="0">
+    <h2>Your Role</h2>
+    <p>You are a reentry planner in Colorado. Two people with very similar offense histories are about to come home, and you are responsible for both plans. One is 17. One is 35. Your job is to decide what developmental research says should be different about their plans, and what should not.</p>
+    <p class="small">Jordan and Dana are fictional composites. Every research finding you see comes from this week's readings, and each one names its source.</p>
+    <div class="cards2">
+      <div class="pcard">
+        <span class="tag a">JORDAN &middot; AGE 17</span>
+        <h3>Leaving a Division of Youth Services facility</h3>
+        <ul class="tight">
+          <li>Committed at 15 for an aggravated robbery committed with two friends; prior juvenile property charges</li>
+          <li>About 18 months in residential placement</li>
+          <li>Starting juvenile parole (Colorado requires at least 6 months), returning to live with his mother</li>
+          <li>Left school in 10th grade; earned some credits while committed</li>
+          <li>Assessed substance use treatment need; no work history</li>
+        </ul>
+      </div>
+      <div class="pcard b">
+        <span class="tag b">DANA &middot; AGE 35</span>
+        <h3>Paroling from a Department of Corrections facility</h3>
+        <ul class="tight">
+          <li>Convicted at 33 for an aggravated robbery committed with two acquaintances; prior property convictions in their 20s</li>
+          <li>About 2 years in prison</li>
+          <li>Starting adult parole, returning to live with a sister</li>
+          <li>Finished high school; worked construction on and off</li>
+          <li>History of substance use; a 9-year-old daughter</li>
+        </ul>
+      </div>
+    </div>
+    <label for="sname" style="display:block; margin-top:16px;"><strong>Your name</strong> (appears on your submission summary)</label>
+    <input type="text" id="sname" autocomplete="name">
+    <p style="margin-top:10px;"><label><input type="checkbox" id="isGrad"> I am an MCJ graduate student (adds the [GRAD] extension at the end)</label></p>
+    <div class="msg" id="msg0"></div>
+  </section>
+
+  <!-- 1 HOT OR COLD -->
+  <section class="screen" data-s="1">
+    <h2>Part 1: Hot or Cold?</h2>
+    <div class="box">
+      <p style="margin:0;">Icenogle and colleagues distinguish two kinds of maturity. <strong>Cold</strong> situations call on reasoning and planning when there is time to think; teenagers reach adult levels of this cognitive capacity around age 16. <strong>Hot</strong> situations call on self-restraint under emotion, excitement, risk, or peer pressure; this psychosocial maturity keeps developing past 18 and into the 20s.</p>
+    </div>
+    <p>Here are six moments from Jordan's first months home. For each one, decide which kind of maturity it mostly tests.</p>
+    <div id="hcList"></div>
+    <div class="msg" id="msg1"></div>
+  </section>
+
+  <!-- 2 BUILD PLANS -->
+  <section class="screen" data-s="2">
+    <h2>Part 2: Build Two Plans</h2>
+    <p>You have <strong>8 planning points for each person</strong>. Each element can get <strong>None</strong> (0 points), <strong>Some</strong> (1 point), or <strong>Heavy</strong> (2 points). You cannot fund everything heavily. Each element shows who its evidence was tested on, because a finding from teenagers does not automatically apply to a 35-year-old, and the reverse.</p>
+    <div class="budget">
+      <span>Jordan: <span id="usedJ">0</span> of 8</span> &nbsp;&nbsp;|&nbsp;&nbsp; <span>Dana: <span id="usedD">0</span> of 8</span>
+    </div>
+    <div id="planTable"></div>
+    <div class="msg" id="msg2"></div>
+  </section>
+
+  <!-- 3 SIDE BY SIDE -->
+  <section class="screen" data-s="3">
+    <h2>Part 3: Side by Side</h2>
+    <p>Here is where your two plans differ.</p>
+    <div id="cmpChart" style="background:#FFF; border:1px solid var(--line); border-radius:6px; padding:10px;"></div>
+    <div class="outline">
+      <label for="diffWhy"><strong>Pick the two biggest differences between your plans and explain each one.</strong> Use the hot and cold distinction where it helps. (At least 40 words.)</label>
+      <textarea id="diffWhy"></textarea>
+      <div class="count" id="diffCount">0 words</div>
+    </div>
+    <div class="msg" id="msg3"></div>
+  </section>
+
+  <!-- 4 EVIDENCE CHECK -->
+  <section class="screen" data-s="4">
+    <h2>Part 4: Evidence Check</h2>
+    <p>Here is what this week's research says about the choices you made. Read each card, then decide whether to change anything.</p>
+    <div id="evCards"></div>
+    <div class="outline">
+      <p style="margin:0 0 8px;"><strong>One revision.</strong> You may change any element for either person, or leave both plans as they are. Either way, explain your decision.</p>
+      <div id="revTable"></div>
+      <p class="small" id="revBudget"></p>
+      <label for="revWhy"><strong>Why did you change (or keep) your plans?</strong> (At least 25 words.)</label>
+      <textarea id="revWhy"></textarea>
+      <div class="count" id="revCount">0 words</div>
+    </div>
+    <div class="msg" id="msg4"></div>
+  </section>
+
+  <!-- 5 WRITE-UP -->
+  <section class="screen" data-s="5">
+    <h2>Part 5: Make the Case</h2>
+    <div class="dark">
+      <p style="margin:0 0 6px;"><strong>Rehabilitative perspective:</strong> Jordan's capacity to change is greater than Dana's, most serious adolescent offenders reduce their offending as they mature, and incarceration can disrupt the schooling that supports desistance.</p>
+      <p style="margin:0;"><strong>Public safety perspective:</strong> adolescence and early adulthood are peak years for offending, Jordan's offense involved violence and peers, and the people Jordan and Dana harmed have a stake in how much weight age should carry.</p>
+    </div>
+    <p>Write 150 to 250 words explaining how and why your two plans differ. Include:</p>
+    <ol>
+      <li>The one or two differences you consider most important, and the evidence behind them.</li>
+      <li>One place where you treated Jordan and Dana the same, and why.</li>
+      <li>Both perspectives above, named explicitly, including where your plan for Jordan trades one against the other.</li>
+    </ol>
+    <textarea id="memo" style="min-height:220px;"></textarea>
+    <div class="count" id="memoCount">0 words</div>
+    <div id="gradBox" style="display:none;">
+      <h2>[GRAD] Extension: Is Colorado Policy Developmentally Informed?</h2>
+      <div class="box">
+        <p style="margin:0;">Assess whether Colorado's juvenile reentry policy is adequately informed by developmental science, and identify one specific reform opportunity. Draw on at least two course readings, which may include the Division of Youth Services report (for example, its definition of recidivism, its pre-discharge rates, or the timing of reoffending). (150 to 250 words)</p>
+      </div>
+      <textarea id="grad" style="min-height:180px;"></textarea>
+      <div class="count" id="gradCount">0 words</div>
+    </div>
+    <div class="msg" id="msg5"></div>
+  </section>
+
+  <!-- 6 SUMMARY -->
+  <section class="screen" data-s="6">
+    <h2>Submit Your Work</h2>
+    <p>Your full record is below. Click <strong>Copy my work</strong>, then paste it into the Week 12 Developmental Framework Application submission box in Canvas.</p>
+    <p><button type="button" class="nav" id="copyBtn">Copy my work</button> <span id="copyStatus" class="small"></span></p>
+    <div id="fallback" style="display:none;">
+      <p class="small">If copying did not work, click inside the box below, select all (Ctrl+A or Cmd+A), and copy (Ctrl+C or Cmd+C).</p>
+      <textarea id="fallbackText" style="min-height:260px;" readonly></textarea>
+    </div>
+    <pre id="summary"></pre>
+    <p class="small">Nothing you type here is saved after you close or reload this page. Copy your work before leaving.</p>
+  </section>
+
+  <div class="btnrow">
+    <button type="button" class="nav secondary" id="back">Back</button>
+    <button type="button" class="nav" id="next">Next</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  var TOTAL = 7;
+  var HC = [
+    { t:'A parole meeting scheduled two weeks from now, to review Jordan\'s school plan.', a:'cold', fb:'Cold. Jordan has time to plan, prepare questions, and think it through. By about 16, reasoning and planning ability are at adult levels in Icenogle\'s data, so this is a situation where Jordan can perform much like an adult.' },
+    { t:'An 11 p.m. text: two old friends have a car and want Jordan to come ride with them.', a:'hot', fb:'Hot. Peers, excitement, and a fast decision late at night are exactly the conditions where self-restraint is still developing in the late teens. Notice that Jordan\'s offense was committed with two friends.' },
+    { t:'Filling out a job application at the library.', a:'cold', fb:'Cold. There is no time pressure and no audience. Jordan\'s difficulty here is more likely to be skills, experience, or a record than developmental immaturity.' },
+    { t:'An argument at home in which his mother brings up the robbery.', a:'hot', fb:'Hot. Strong emotion compromises judgment at any age, and Icenogle\'s research suggests teenagers and young adults are more vulnerable to it than adults in their late 20s.' },
+    { t:'A school re-enrollment meeting with a counselor and his mother.', a:'cold', fb:'Cold. It is structured, scheduled, and supported by adults. Notice that the setting itself lowers the demand on self-restraint.' },
+    { t:'Being stopped by police while walking with friends.', a:'hot', fb:'Hot. A stressful encounter, an audience of peers, and pressure to decide quickly. This is where a 17-year-old who reasons like an adult in calm settings may not act like one.' }
+  ];
+  var EL = [
+    { id:'school', name:'School re-enrollment and education support', tested:'Youth', ev:'Tested on youth', card:'<strong>School.</strong> Aizer and Doyle (Chicago juvenile court, more than 35,000 youth) estimate that juvenile incarceration lowered high school completion by 13 percentage points, with the strongest effects at ages 15 and 16, and that incarcerated youth were much less likely to return to school at all. Mulvey reports that youth receiving community-based services after release were more likely to attend school.' },
+    { id:'family', name:'Family-based work', tested:'Youth', ev:'Tested on youth', card:'<strong>Family.</strong> In Pathways to Desistance, youth whose substance use treatment lasted at least 90 days and included significant family involvement showed significant reductions in alcohol use, marijuana use, and offending over the following 6 months (Mulvey, 2011). The family finding is tied to treatment, not to family contact by itself.' },
+    { id:'mentor', name:'Individual mentoring or case management', tested:'Youth and young adults', ev:'Tested on youth and young adults', card:'<strong>Individual delivery.</strong> In James and colleagues\' meta-analysis of 22 aftercare studies, programs delivered individually had larger effects (d = .23) than those combining group and individual therapy (d = &minus;.15), and well-implemented programs outperformed those with reported implementation problems.' },
+    { id:'early', name:'Intensive contact in the first 6 months', tested:'Youth and young adults', ev:'Tested on youth and young adults', card:'<strong>Timing and intensity.</strong> More intensive aftercare was associated with lower recidivism (James et al., 2013). Mulvey found community-based services in the 6 months after release were linked to more school, more work, and less justice involvement. In Colorado, the Division of Youth Services reports that 82% of youth who recidivated did so within one year of discharge, and 56% within six months. But note James\'s fade-out: effects were much larger with follow-up under 12 months (d = .50, only 3 studies) than at 12 months or longer (d = .09).' },
+    { id:'peer', name:'Peer-contact and curfew conditions', tested:'Developmental rationale only', ev:'Developmental rationale; no outcome study this week', card:'<strong>Peer and curfew conditions.</strong> Icenogle and colleagues explain why peer and late-night situations are risky for teenagers, but none of this week\'s readings tests whether peer or curfew conditions improve outcomes. Recall from Week 9 that every added condition is another way to violate supervision.' },
+    { id:'jobs', name:'Employment support', tested:'Mostly adults', ev:'Evidence mostly from adults (Week 5)', card:'<strong>Employment.</strong> The employment research you read in Week 5 comes mostly from adults. This week, Mulvey links post-release community services to more work for youth, and the Division of Youth Services lists lacking a prosocial program such as work or school at discharge among the characteristics more common in recidivists, an association rather than a tested effect.' },
+    { id:'sud', name:'Substance use treatment', tested:'Youth', ev:'Tested on youth', card:'<strong>Substance use.</strong> Mulvey reports that substance use was a strong predictor of offending among serious adolescent offenders, and that treatment reduced both substance use and offending in the short term when it lasted at least 90 days and involved families. In Colorado, an assessed substance use treatment need at commitment was more common among youth who recidivated.' },
+    { id:'length', name:'Longer community supervision', tested:'Youth', ev:'Tested on youth', card:'<strong>Length of supervision.</strong> In Pathways to Desistance, increasing the duration of community supervision reduced reported reoffending (Mulvey, 2011). This was supervision as part of aftercare after a court-ordered placement, for youth found guilty of serious offenses.' }
+  ];
+  var LV = ['None','Some','Heavy'];
+  var state = { s:0, hc:{}, plan:{J:{},D:{}}, orig:null, rev:null };
+  EL.forEach(function(e){ state.plan.J[e.id]=0; state.plan.D[e.id]=0; });
+
+  function $(id){ return document.getElementById(id); }
+  function words(t){ t=(t||'').trim(); return t ? t.split(/\s+/).length : 0; }
+  function used(p){ return EL.reduce(function(s,e){ return s+state.plan[p][e.id]; },0); }
+
+  // hot/cold
+  $('hcList').innerHTML = HC.map(function(h,i){
+    return '<div class="evidence"><p style="margin:0 0 8px;"><strong>'+(i+1)+'.</strong> '+h.t+'</p>'+
+      '<div class="chips" data-h="'+i+'"><button type="button" class="chip" data-v="cold">Cold: reasoning with time to think</button><button type="button" class="chip" data-v="hot">Hot: self-restraint under pressure</button></div>'+
+      '<div class="feedback" id="hcfb'+i+'"></div></div>';
+  }).join('');
+  document.querySelectorAll('#hcList .chips').forEach(function(box){
+    var i=+box.getAttribute('data-h');
+    box.querySelectorAll('.chip').forEach(function(ch){
+      ch.addEventListener('click', function(){
+        var v=ch.getAttribute('data-v');
+        if (state.hc[i]===undefined) state.hc[i]={first:v};
+        state.hc[i].last=v;
+        box.querySelectorAll('.chip').forEach(function(x){ x.classList.toggle('on', x===ch); });
+        var ok = v===HC[i].a;
+        $('hcfb'+i).innerHTML='<strong>'+(ok?'Yes. ':'Look again. ')+'</strong>'+(ok?HC[i].fb:'Think about whether Jordan has time to plan, or has to act fast with emotion or peers in play.');
+        $('hcfb'+i).className='feedback '+(ok?'okfb':'nofb');
+      });
+    });
+  });
+
+  // plan tables
+  function planHTML(prefix){
+    return '<div style="overflow-x:auto;"><table class="plan"><tr><th>Element</th><th>Evidence base</th><th>Jordan (17)</th><th>Dana (35)</th></tr>'+
+      EL.map(function(e){
+        var cell=function(p){ return '<div class="seg" data-p="'+p+'" data-e="'+e.id+'" data-x="'+prefix+'">'+LV.map(function(l,k){ return '<button type="button" data-k="'+k+'">'+l+'</button>'; }).join('')+'</div>'; };
+        return '<tr><td><strong>'+e.name+'</strong><span class="tag mtag">'+e.ev+'</span></td><td><span class="tag">'+e.ev+'</span></td><td>'+cell('J')+'</td><td>'+cell('D')+'</td></tr>';
+      }).join('')+'</table></div>';
+  }
+  $('planTable').innerHTML = planHTML('p');
+  $('revTable').innerHTML = planHTML('r');
+  function paint(){
+    document.querySelectorAll('.seg').forEach(function(sg){
+      var p=sg.getAttribute('data-p'), e=sg.getAttribute('data-e');
+      sg.querySelectorAll('button').forEach(function(b){ b.classList.toggle('on', +b.getAttribute('data-k')===state.plan[p][e]); });
+    });
+    $('usedJ').textContent=used('J'); $('usedD').textContent=used('D');
+    $('revBudget').textContent='Points used after revision: Jordan '+used('J')+' of 8, Dana '+used('D')+' of 8.';
+  }
+  document.querySelectorAll('.seg button').forEach(function(b){
+    b.addEventListener('click', function(){
+      var sg=b.parentNode, p=sg.getAttribute('data-p'), e=sg.getAttribute('data-e'), k=+b.getAttribute('data-k'), x=sg.getAttribute('data-x');
+      var prev=state.plan[p][e];
+      if (used(p)-prev+k>8){ $(x==='p'?'msg2':'msg4').textContent='That would put '+(p==='J'?'Jordan':'Dana')+' over 8 points. Lower something first.'; return; }
+      state.plan[p][e]=k; $(x==='p'?'msg2':'msg4').textContent=''; paint();
+    });
+  });
+
+  function chart(){
+    var rowH=34, W=760, L=270, top=34, H=top+EL.length*rowH+10, unit=(W-L-60)/2/1.05;
+    var s='<svg viewBox="0 0 '+W+' '+H+'" width="100%" role="img" aria-label="Bar chart comparing planning points for Jordan and Dana by plan element">';
+    s+='<rect x="'+L+'" y="6" width="14" height="10" fill="#000"/><text x="'+(L+20)+'" y="15" font-size="12">Jordan (17)</text>';
+    s+='<rect x="'+(L+120)+'" y="6" width="14" height="10" fill="#B39A55"/><text x="'+(L+140)+'" y="15" font-size="12">Dana (35)</text>';
+    EL.forEach(function(e,i){
+      var y=top+i*rowH, j=state.plan.J[e.id], d=state.plan.D[e.id];
+      s+='<text x="'+(L-8)+'" y="'+(y+17)+'" font-size="12" text-anchor="end">'+e.name+'</text>';
+      s+='<rect x="'+L+'" y="'+(y+3)+'" width="'+Math.max(2,j*unit)+'" height="12" fill="#000"/><text x="'+(L+Math.max(2,j*unit)+5)+'" y="'+(y+13)+'" font-size="11">'+LV[j]+'</text>';
+      s+='<rect x="'+L+'" y="'+(y+17)+'" width="'+Math.max(2,d*unit)+'" height="12" fill="#B39A55"/><text x="'+(L+Math.max(2,d*unit)+5)+'" y="'+(y+27)+'" font-size="11">'+LV[d]+'</text>';
+    });
+    return s+'</svg>';
+  }
+
+  function evCards(){
+    var intro='<div class="evidence"><p style="margin:0;"><strong>Start here.</strong> In Pathways to Desistance, about 91.5% of youth found guilty of serious offenses reported decreased or limited offending in the first 3 years after court involvement, and Mulvey concludes that most youth who commit felonies greatly reduce their offending over time, regardless of the intervention. Any plan for Jordan works with that trend, not against it.</p></div>';
+    var age='<div class="evidence"><p style="margin:0;"><strong>What about Dana?</strong> Most findings on these cards come from youth and young adults. Icenogle\'s sample stops at age 30, and the aftercare meta-analysis covers juveniles and young adults. Where you applied these findings to Dana, you were extending them past the people they were tested on. That may still be reasonable, but it is a judgment call, not a finding.</p></div>';
+    return intro + EL.map(function(e){
+      var j=LV[state.plan.J[e.id]], d=LV[state.plan.D[e.id]];
+      return '<div class="evidence"><p class="small" style="margin:0 0 6px;">Your plans: Jordan <strong>'+j+'</strong> &middot; Dana <strong>'+d+'</strong> &middot; '+e.ev+'</p><p style="margin:0;">'+e.card+'</p></div>';
+    }).join('') + age;
+  }
+
+  [['diffWhy','diffCount'],['revWhy','revCount'],['memo','memoCount'],['grad','gradCount']].forEach(function(p){
+    $(p[0]).addEventListener('input', function(){ $(p[1]).textContent=words($(p[0]).value)+' words'; });
+  });
+  $('isGrad').addEventListener('change', function(){ $('gradBox').style.display=$('isGrad').checked?'block':'none'; });
+
+  function planText(plan){ return EL.map(function(e){ return '  '+e.name+': Jordan '+LV[plan.J[e.id]]+' | Dana '+LV[plan.D[e.id]]; }).join('\n'); }
+  function copyPlan(){ var o={J:{},D:{}}; EL.forEach(function(e){ o.J[e.id]=state.plan.J[e.id]; o.D[e.id]=state.plan.D[e.id]; }); return o; }
+
+  function summary(){
+    var L=[];
+    L.push('WEEK 12 ENGAGEMENT ACTIVITY: SAME OFFENSE, DIFFERENT CLOCK');
+    L.push('Name: '+($('sname').value.trim()||'(no name entered)')+($('isGrad').checked?'  [GRAD]':'  [UG]'));
+    L.push('');
+    L.push('PART 1: HOT OR COLD (first answer / correct)');
+    var right=0;
+    HC.forEach(function(h,i){ var r=state.hc[i]||{}; if(r.first===h.a) right++; L.push('  '+(i+1)+'. first: '+(r.first||'-')+' | correct: '+h.a); });
+    L.push('  Correct on first try: '+right+' of 6');
+    L.push('');
+    L.push('PART 2: ORIGINAL PLANS (8 points each)');
+    L.push(planText(state.orig||state.plan));
+    L.push('');
+    L.push('PART 3: BIGGEST DIFFERENCES');
+    L.push($('diffWhy').value.trim());
+    L.push('');
+    L.push('PART 4: REVISED PLANS');
+    var changes=[]; if(state.orig){ EL.forEach(function(e){ ['J','D'].forEach(function(p){ if(state.orig[p][e.id]!==state.plan[p][e.id]) changes.push('  '+(p==='J'?'Jordan':'Dana')+', '+e.name+': '+LV[state.orig[p][e.id]]+' -> '+LV[state.plan[p][e.id]]); }); }); }
+    L.push(changes.length?changes.join('\n'):'  No changes made.');
+    L.push('  Reason: '+$('revWhy').value.trim());
+    L.push('');
+    L.push('PART 5: WRITE-UP ('+words($('memo').value)+' words)');
+    L.push($('memo').value.trim());
+    if ($('isGrad').checked){ L.push(''); L.push('[GRAD] IS COLORADO POLICY DEVELOPMENTALLY INFORMED? ('+words($('grad').value)+' words)'); L.push($('grad').value.trim()); }
+    return L.join('\n');
+  }
+
+  function validate(s){
+    var m='';
+    if (s===1){ for (var i=0;i<HC.length;i++){ if(!state.hc[i] || state.hc[i].last!==HC[i].a){ m='Sort all six moments correctly before moving on (you can change answers).'; break; } } }
+    if (s===2){ if(used('J')<6 || used('D')<6) m='Use at least 6 of the 8 points for each person.'; }
+    if (s===3){ if(words($('diffWhy').value)<40) m='Write at least 40 words.'; }
+    if (s===4){ if(words($('revWhy').value)<25) m='Write at least 25 words.'; }
+    if (s===5){ if(words($('memo').value)<150) m='Your write-up needs at least 150 words.'; else if($('isGrad').checked && words($('grad').value)<150) m='The [GRAD] extension needs at least 150 words.'; }
+    var el=$('msg'+s); if(el) el.textContent=m;
+    return !m;
+  }
+
+  function show(s){
+    state.s=s;
+    document.querySelectorAll('.screen').forEach(function(x){ x.classList.toggle('active', +x.getAttribute('data-s')===s); });
+    $('bar').style.width=(s/(TOTAL-1)*100)+'%';
+    var names=['Setup','Hot or cold?','Build two plans','Side by side','Evidence check','Make the case','Submit'];
+    $('steplabel').textContent='Step '+(s+1)+' of '+TOTAL+': '+names[s];
+    $('back').disabled = s===0;
+    $('next').style.display = s===TOTAL-1 ? 'none' : '';
+    $('next').textContent = s===5 ? 'Finish' : 'Next';
+    if (s===2 || s===4) paint();
+    if (s===3) $('cmpChart').innerHTML=chart();
+    if (s===4){ if(!state.orig) state.orig=copyPlan(); $('evCards').innerHTML=evCards(); }
+    if (s===6){ var t=summary(); $('summary').textContent=t; $('fallbackText').value=t; }
+    try { window.scrollTo(0,0); } catch(e){}
+  }
+  $('next').addEventListener('click', function(){ if(validate(state.s)) show(state.s+1); });
+  $('back').addEventListener('click', function(){ if(state.s>0) show(state.s-1); });
+  $('copyBtn').addEventListener('click', function(){
+    var t=summary();
+    function fail(){ $('fallback').style.display='block'; $('fallbackText').value=t; $('fallbackText').focus(); $('fallbackText').select(); $('copyStatus').textContent='Automatic copy is blocked here. Use the box below.'; }
+    try { if(navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(t).then(function(){ $('copyStatus').textContent='Copied. Paste it into the Canvas submission box.'; }, fail); } else fail(); } catch(e){ fail(); }
+  });
+  window.__activity={state:state, show:show, summary:summary, used:used, EL:EL};
+  show(0);
+})();
+</script>
+</body>
+</html>
